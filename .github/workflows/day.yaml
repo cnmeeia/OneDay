@@ -1,0 +1,37 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Select Xcode
+      run: sudo xcode-select -switch /Applications/Xcode.app
+      
+    - name: Build iOS App
+      run: |
+        xcodebuild -scheme "OneDay" \
+        -project "OneDay.xcodeproj" \
+        -configuration Debug \
+        -archivePath $RUNNER_TEMP/OneDay.xcarchive \
+        clean archive
+        
+    - name: Export IPA
+      run: |
+        xcodebuild -exportArchive \
+        -archivePath $RUNNER_TEMP/OneDay.xcarchive \
+        -exportOptionsPlist exportOptions.plist \
+        -exportPath $RUNNER_TEMP/export
+        
+    - name: Upload IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: OneDay-Debug
+        path: ${{ runner.temp }}/export/OneDay.ipa
